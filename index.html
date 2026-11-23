@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-BUDDY GUARD | AI 군인 맞춤형 건강관리 시스템</title>
+    <!-- 그래프 시각화를 위한 Chart.js 라이브러리 연결 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 전체 페이지 기본 스타일 (국방/밀리터리 다크 그린 & 화이트 테마) */
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f0f2f0;
+            color: #222;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        /* 상단 헤더 스타일 */
+        .header {
+            background-color: #2b3a28;
+            color: #ffffff;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+        .header p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: #d4e0d2;
+        }
+        /* 2단 그리드 레이아웃 */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+        /* 카드 박스 공통 스타일 */
+        .card {
+            background: #ffffff;
+            padding: 22px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .card h2 {
+            font-size: 1.15rem;
+            color: #2b3a28;
+            border-bottom: 2px solid #2b3a28;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        /* 테스트 케이스 자동 채우기 버튼 영역 */
+        .preset-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        .preset-btn {
+            flex: 1;
+            padding: 8px 5px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            transition: 0.2s;
+        }
+        .preset-btn:hover { background-color: #e2e6ea; }
+        .btn-normal { border-color: #2e7d32; color: #2e7d32; }
+        .btn-caution { border-color: #ef6c00; color: #ef6c00; }
+        .btn-danger { border-color: #c62828; color: #c62828; }
+
+        /* 센서 입력 폼 스타일 */
+        .sensor-item {
+            margin-bottom: 15px;
+        }
+        .sensor-item label {
+            display: block;
+            font-weight: bold;
+            font-size: 0.92rem;
+            margin-bottom: 5px;
+        }
+        .sensor-desc {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        /* 실행 버튼 */
+        .run-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #2b3a28;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .run-btn:hover { background-color: #1e291c; }
+
+        /* 결과 출력 박스 스타일 */
+        .result-box {
+            padding: 18px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .status-normal { background-color: #e8f5e9; border-left: 6px solid #2e7d32; }
+        .status-caution { background-color: #fff3e0; border-left: 6px solid #ef6c00; }
+        .status-danger { background-color: #ffebee; border-left: 6px solid #c62828; }
+
+        .status-title {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+        }
+        .fatigue-badge {
+            display: inline-block;
+            background-color: #2b3a28;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .guide-list {
+            margin: 10px 0;
+            padding-left: 20px;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        .tree-path-box {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px dashed #666;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #333;
+            margin-top: 12px;
+        }
+        /* 하단 데이터셋 분포 차트 영역 */
+        .full-width {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 20px;
+            align-items: center;
+        }
+        @media (max-width: 768px) {
+            .chart-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 상단 타이틀 -->
+    <div class="header">
+        <h1>K-BUDDY GUARD</h1>
+        <p>의사결정나무(Decision Tree) 알고리즘 기반 군인 맞춤형 생체 데이터 분석 시스템</p>
+    </div>
+
+    <div class="grid">
+        <!-- 좌측 카드: 웨어러블 가상 센서 데이터 입력 -->
+        <div class="card">
+            <h2>1. 웨어러블 가상 센서 데이터 입력</h2>
+            
+            <!-- 시연 및 테스트용 자동 입력 버튼 -->
+            <div class="preset-group">
+                <button type="button" class="preset-btn btn-normal" onclick="setPreset('normal')">예시1: 정상 훈련</button>
+                <button type="button" class="preset-btn btn-caution" onclick="setPreset('caution')">예시2: 행군 피로(주의)</button>
+                <button type="button" class="preset-btn btn-danger" onclick="setPreset('danger')">예시3: 온열질환(위험)</button>
+            </div>
+
+            <div class="sensor-item">
+                <label>[심박 센서] 분당 심박수 (heart_rate)</label>
+                <div class="sensor-desc">단위: bpm (평시 60~80 / 고강도 훈련 130 이상)</div>
+                <input type="number" id="heartRate" value="78" min="40" max="220">
+            </div>
+
+            <div class="sensor-item">
+                <label>[피부 온도 센서] 체표면 온도 (skin_temp)</label>
+                <div class="sensor-desc">단위: ℃ (정상 36.5℃ 내외 / 37.8℃ 이상 위험)</div>
+                <input type="number" id="skinTemp" value="36.5" step="0.1" min="34.0" max="42.0">
+            </div>
+
+            <div class="sensor-item">
+                <label>[가속도 센서] 현재 활동 강도 (activity_level)</label>
+                <div class="sensor-desc">범위: 1~10단계 (1: 휴식, 5: 일반훈련, 9~10: 완전군장 행군)</div>
+                <input type="number" id="activityLevel" value="4" min="1" max="10">
+            </div>
+
+            <div class="sensor-item">
+                <label>[가속도/심박 복합] 전일 수면 시간 (sleep_hours)</label>
+                <div class="sensor-desc">단위: 시간 (권장 7~8시간 / 5시간 미만 수면 부족)</div>
+                <input type="number" id="sleepHours" value="7.0" step="0.5" min="0" max="12">
+            </div>
+
+            <button type="button" class="run-btn" onclick="runDecisionTree()">AI 생체 데이터 분석 실행</button>
+        </div>
+
+        <!-- 우측 카드: AI 분석 결과 및 맞춤형 가이드 -->
+        <div class="card">
+            <h2>2. AI 분석 결과 및 맞춤형 건강관리 가이드</h2>
+            
+            <div id="resultBox" class="result-box status-normal">
+                <h3 id="statusTitle" class="status-title">🟢 정상 단계 (임무 수행 적합)</h3>
+                <div id="fatigueBadge" class="fatigue-badge">가공 속성 - 종합 피로도 지수: 25 / 100점</div>
+                <ul id="guideList" class="guide-list"></ul>
+                <div id="treePathBox" class="tree-path-box"></div>
+            </div>
+
+            <!-- 개별 장병 생체 수치 그래프 -->
+            <canvas id="soldierChart"></canvas>
+        </div>
+
+        <!-- 하단 전체 카드: 논문 3.1절 보고서 첨부용 데이터 가공 시각화 -->
+        <div class="card full-width">
+            <h2>3. 가상 장병 데이터셋(N=100) 가공 및 상태 분류 분포 시각화</h2>
+            <div class="chart-grid">
+                <div>
+                    <p style="font-size: 0.92rem; line-height: 1.6; color: #333;">
+                        <strong>[데이터 수집 및 가공 요약]</strong><br>
+                        표준 생체 반응 기준을 바탕으로 가상 장병 100명의 훈련 데이터를 구축하고, 4가지 핵심 센서 속성(심박수, 피부온도, 활동강도, 수면시간)을 결합하여 <strong>종합 피로도 지수(fatigue_score)</strong>를 파생 속성으로 산출하였습니다.<br><br>
+                        • <strong>정상군 (65명, 65%):</strong> 모든 생체 지표가 안정 범위 내 위치<br>
+                        • <strong>주의군 (25명, 25%):</strong> 피로도 60점 이상 또는 수면 5시간 미만으로 수분·휴식 필요<br>
+                        • <strong>위험군 (10명, 10%):</strong> 피부온도 37.8℃ 이상 또는 심박수 150bpm 이상으로 즉각 열외 필요
+                    </p>
+                </div>
+                <div style="max-width: 300px; margin: 0 auto;">
+                    <canvas id="datasetChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let soldierChart = null;
+
+    // 1. 테스트 케이스 자동 입력 함수 (발표 및 시연용)
+    function setPreset(type) {
+        if (type === 'normal') {
+            document.getElementById('heartRate').value = 78;
+            document.getElementById('skinTemp').value = 36.5;
+            document.getElementById('activityLevel').value = 4;
+            document.getElementById('sleepHours').value = 7.0;
+        } else if (type === 'caution') {
+            document.getElementById('heartRate').value = 128;
+            document.getElementById('skinTemp').value = 37.2;
+            document.getElementById('activityLevel').value = 8;
+            document.getElementById('sleepHours').value = 4.5;
+        } else if (type === 'danger') {
+            document.getElementById('heartRate').value = 162;
+            document.getElementById('skinTemp').value = 38.3;
+            document.getElementById('activityLevel').value = 9;
+            document.getElementById('sleepHours').value = 5.0;
+        }
+        runDecisionTree();
+    }
+
+    // 2. 핵심 AI 로직: 데이터 가공 및 의사결정나무(Decision Tree) 분류 함수
+    function runDecisionTree() {
+        // 입력값 가져오기 (4가지 원시 센서 속성)
+        const hr = parseFloat(document.getElementById('heartRate').value);
+        const temp = parseFloat(document.getElementById('skinTemp').value);
+        const act = parseFloat(document.getElementById('activityLevel').value);
+        const sleep = parseFloat(document.getElementById('sleepHours').value);
+
+        // [데이터 가공] 4가지 속성을 결합한 파생 변수 '종합 피로도 지수(0~100점)' 계산
+        // 학생이 직접 설계한 가중치 공식: 심박 상승분 + 활동 부하 + 수면 부족분 + 체온 상승분
+        let fatigue = Math.round(((hr - 60) * 0.4) + (act * 4.5) + ((8 - sleep) * 5) + ((temp - 36.5) * 15));
+        if (fatigue < 5) fatigue = 5;
+        if (fatigue > 100) fatigue = 100;
+
+        let statusTitle = "";
+        let statusClass = "";
+        let treePath = "";
+        let guides = [];
+
+        // [의사결정나무 분기 구조] Root Node -> Internal Nodes -> Leaf Nodes
+        // 1단계 분기(Root): 급성 온열질환 및 심혈관 위험 임계치 검사
+        if (temp >= 37.8 || hr >= 150) {
+            statusTitle = "🔴 위험 단계 (즉시 훈련 열외 및 의무대 조치)";
+            statusClass = "status-danger";
+            treePath = `[의사결정 경로] Root(체온 ${temp}℃ ≥ 37.8℃ 또는 심박 ${hr}bpm ≥ 150bpm) → [Leaf: 위험군 분류]`;
+            guides.push("🚨 즉시 모든 훈련을 중단하고 그늘지고 통풍이 잘되는 곳으로 이동하십시오.");
+            guides.push("💧 탈수 방지를 위해 전해질 음료 또는 시원한 물 500ml를 천천히 섭취하십시오.");
+            guides.push("📡 [프라이버시 보호 전송] 위급 상황으로 판단되어 분대장 및 의무대에 응급 알람이 전송되었습니다.");
+        } 
+        // 2단계 분기(Internal Node): 누적 피로도 및 수면 부족 검사
+        else if (fatigue >= 60 || sleep < 5.0 || (act >= 7 && hr >= 120)) {
+            statusTitle = "🟡 주의 단계 (수분 보충 및 정적 휴식 권장)";
+            statusClass = "status-caution";
+            treePath = `[의사결정 경로] Root(체온·심박 정상 범위) → Node2(피로도 ${fatigue}점 ≥ 60 또는 수면 ${sleep}h < 5h) → [Leaf: 주의군 분류]`;
+            
+            const recommendedWater = Math.round(300 + (act * 40)); // 활동 강도 비례 수분 섭취량 계산
+            guides.push(`💧 활동 강도(${act}단계)를 고려하여 1시간 이내에 수분 ${recommendedWater}ml 섭취를 권장합니다.`);
+            guides.push(`🛑 누적 피로도가 ${fatigue}점으로 높습니다. 다음 훈련 전 최소 15~20분간 휴식을 취하십시오.`);
+            if (sleep < 6.0) {
+                guides.push(`💤 전일 수면 시간(${sleep}시간)이 부족합니다. 취침 전 스마트 밴드 수면 집중 모드를 활성화하십시오.`);
+            }
+        } 
+        // 3단계 분기(Leaf Node): 모든 지표 안정
+        else {
+            statusTitle = "🟢 정상 단계 (임무 수행 적합)";
+            statusClass = "status-normal";
+            treePath = `[의사결정 경로] Root(체온·심박 정상) → Node2(피로도 ${fatigue}점 < 60, 수면 ${sleep}h 양호) → [Leaf: 정상군 분류]`;
+            guides.push("✅ 현재 심박수, 체온, 피로도가 모두 안정적입니다. 정상적인 훈련 수행이 가능합니다.");
+            guides.push("💧 컨디션 유지를 위해 훈련 중 시간당 200ml의 기본 수분 섭취를 권장합니다.");
+            guides.push("🔒 모든 생체 데이터는 개인 단말기(On-Device) 내에서만 안전하게 보호됩니다.");
+        }
+
+        // 화면 UI 업데이트
+        const resultBox = document.getElementById('resultBox');
+        resultBox.className = "result-box " + statusClass;
+        document.getElementById('statusTitle').innerText = statusTitle;
+        document.getElementById('fatigueBadge').innerText = `가공 속성 - 종합 피로도 지수: ${fatigue} / 100점`;
+        document.getElementById('treePathBox').innerText = treePath;
+
+        const guideList = document.getElementById('guideList');
+        guideList.innerHTML = "";
+        guides.forEach(text => {
+            const li = document.createElement('li');
+            li.innerText = text;
+            guideList.appendChild(li);
+        });
+
+        // 개별 생체 지표 막대그래프 갱신
+        drawSoldierChart(hr, fatigue, act, sleep);
+    }
+
+    // 3. 개별 장병 생체 데이터 막대그래프 그리기
+    function drawSoldierChart(hr, fatigue, act, sleep) {
+        const ctx = document.getElementById('soldierChart').getContext('2d');
+        if (soldierChart) soldierChart.destroy();
+
+        soldierChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['심박수(bpm)', '피로도(점)', '활동강도(x10)', '수면시간(x10)'],
+                datasets: [{
+                    label: '현재 측정 및 가공 수치',
+                    data: [hr, fatigue, act * 10, sleep * 10],
+                    backgroundColor: ['#2b3a28', '#ef6c00', '#1976d2', '#00897b'],
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: '실시간 생체 속성 및 파생 피로도 비교' }
+                },
+                scales: {
+                    y: { beginAtZero: true, max: 200 }
+                }
+            }
+        });
+    }
+
+    // 4. 논문 3.1절 첨부용 가상 데이터셋(100명) 분포 도넛 차트 그리기
+    function drawDatasetChart() {
+        const ctx = document.getElementById('datasetChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['정상군 (65명)', '주의군 (25명)', '위험군 (10명)'],
+                datasets: [{
+                    data: [65, 25, 10],
+                    backgroundColor: ['#2e7d32', '#ef6c00', '#c62828']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: { display: true, text: '가상 장병 데이터셋(N=100) 분류 비율' }
+                }
+            }
+        });
+    }
+
+    // 페이지 로드 시 초기 실행
+    window.onload = function() {
+        runDecisionTree();
+        drawDatasetChart();
+    };
+</script>
+
+</body>
+</html>
